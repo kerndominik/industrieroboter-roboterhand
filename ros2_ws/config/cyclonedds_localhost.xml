@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CycloneDDS configuration: all ROS 2 nodes on this computer only, discovery by
+  unicast over the loopback interface (no multicast needed).
+
+  Needed e.g. in WSL 2 with networkingMode=mirrored, where "lo" is not
+  multicast capable and the default DDS discovery fails or is incomplete.
+
+  Usage (see README):
+    export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    export CYCLONEDDS_URI=file://<path>/ros2_ws/config/cyclonedds_localhost.xml
+-->
+<CycloneDDS xmlns="https://cdds.io/config"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+  <Domain Id="any">
+    <General>
+      <Interfaces>
+        <NetworkInterface name="lo"/>
+      </Interfaces>
+      <AllowMulticast>false</AllowMulticast>
+      <!-- WSL 2 mirrored mode silently drops UDP datagrams > ~1.4 kB on the
+           loopback interface (e.g. /tf with 15 transforms never arrives).
+           Keep every datagram small; larger samples are fragmented by DDS. -->
+      <MaxMessageSize>1400B</MaxMessageSize>
+      <FragmentSize>1200B</FragmentSize>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>60</MaxAutoParticipantIndex>
+      <Peers>
+        <Peer address="127.0.0.1"/>
+      </Peers>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

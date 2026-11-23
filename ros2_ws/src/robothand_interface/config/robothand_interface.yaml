@@ -1,0 +1,38 @@
+# Parameters of the robot hand hardware interface.
+# Finger / servo order everywhere: thumb, index, middle, ring, little
+robothand_interface:
+  ros__parameters:
+    # Serial port of the microcontroller. Arduino Mega (CH340) and most ESP32
+    # boards show up as /dev/ttyUSB0, original Arduinos as /dev/ttyACM0.
+    # A pyserial URL is possible as well, e.g. socket://localhost:5555
+    port: /dev/ttyUSB0
+    baudrate: 115200
+    simulate: false
+
+    # --- servo calibration --------------------------------------------------
+    actuated_joints: [thumb_mcp_joint, index_mcp_joint, middle_mcp_joint, ring_mcp_joint, little_mcp_joint]
+    # servo angle [deg] of the fully open / fully closed finger. Swap the
+    # values of a finger if its servo turns the other way round.
+    servo_open_deg:   [10.0, 10.0, 10.0, 10.0, 10.0]
+    servo_closed_deg: [170.0, 170.0, 170.0, 170.0, 170.0]
+    # angle of the actuated URDF joint [rad] at "fully closed"
+    # (= upper joint limit in robothand.urdf.xacro: thumb 90 deg, fingers 85 deg)
+    joint_closed_rad: [1.5708, 1.4835, 1.4835, 1.4835, 1.4835]
+
+    # joints without servo, published with a fixed (manually set) value
+    passive_joints: [thumb_rotation_joint]
+    passive_joint_positions: [-0.2863]   # thumb orientation of the CAD model
+
+    max_speed_deg_s: 180.0     # servo speed limit (ramp in the firmware)
+    telemetry_rate_hz: 50.0    # servo feedback / strain gauge rate of the firmware
+    publish_rate_hz: 50.0      # joint_states rate
+    command_rate_hz: 50.0      # max. rate of servo commands sent to the board
+
+    # --- strain gauges: value = raw * scale + offset ------------------------
+    gauge_names: [thumb, index, middle, ring, little]
+    gauge_scale: [1.0, 1.0, 1.0, 1.0, 1.0]
+    gauge_offset: [0.0, 0.0, 0.0, 0.0, 0.0]
+    gauge_unit: counts
+
+    disable_on_shutdown: true  # servos go limp when the node is stopped
+    reconnect_period_s: 2.0

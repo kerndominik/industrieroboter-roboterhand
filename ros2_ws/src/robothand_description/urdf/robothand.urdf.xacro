@@ -1,0 +1,262 @@
+<?xml version="1.0"?>
+<!--
+  Robot hand - URDF model (xacro)
+
+  Geometry derived from the CAD assembly roboterhand_cad_dateien/Hand.stp
+  (Autodesk Inventor). All CAD values are in mm, URDF uses m.
+
+  Coordinate system (= CAD assembly frame):
+    x : across the palm, from the little finger (-x) to the thumb (+x)
+    y : along the fingers (finger tips at +y)
+    z : palm normal, the palm side (where the fingers flex to) is -z
+
+  Kinematic structure (per finger one servo with tendon, the joints of a finger
+  are coupled -> URDF <mimic>):
+    base_link (forearm / servo housing "Base")
+     └ palm_link ("handflaeche", fixed)
+        ├ <finger>_mcp_joint  (actuated)  -> <finger>_proximal_link
+        │  └ <finger>_pip_joint (mimic)   -> <finger>_middle_link
+        │     └ <finger>_dip_joint (mimic) -> <finger>_distal_link -> <finger>_tip
+        └ thumb_rotation_joint (passive, set manually) -> thumb_base_link ("Daumen_Grundgelenk")
+           └ thumb_mcp_joint (actuated) -> thumb_proximal_link
+              └ thumb_ip_joint (mimic) -> thumb_distal_link -> thumb_tip
+
+  Joint angle 0 = finger straight. Positive angles flex the finger towards the
+  palm side. The CAD assembly shows the thumb at thumb_rotation_joint = -0.2863 rad.
+-->
+<robot name="robothand" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===================================================================== -->
+  <!--  Parameters                                                            -->
+  <!-- ===================================================================== -->
+  <xacro:property name="mm" value="0.001"/>
+  <xacro:property name="deg" value="${pi / 180.0}"/>
+  <xacro:property name="mesh_dir" value="package://robothand_description/meshes"/>
+
+  <!-- Material density for the (approximate) inertias, PLA ~1240 kg/m^3 -->
+  <xacro:property name="density" value="1240.0"/>
+
+  <!-- Joint ranges -->
+  <xacro:property name="mcp_max" value="${85 * deg}"/>
+  <xacro:property name="thumb_mcp_max" value="${90 * deg}"/>
+  <xacro:property name="thumb_rotation_min" value="${-30 * deg}"/>
+  <xacro:property name="thumb_rotation_max" value="${105 * deg}"/>
+
+  <!-- Tendon coupling: q_pip = pip_ratio * q_mcp, q_dip = dip_ratio * q_mcp -->
+  <xacro:property name="pip_ratio" value="1.0"/>
+  <xacro:property name="dip_ratio" value="0.7"/>
+  <xacro:property name="thumb_ip_ratio" value="1.0"/>
+
+  <!-- Phalanx lengths (pivot to pivot, from the pin holes in the CAD parts) -->
+  <xacro:property name="len_endteil" value="44.0"/>     <!-- endteil.stl:    pivots at y=-7 / y=37 -->
+  <xacro:property name="len_mittelteil" value="34.0"/>  <!-- mittelteil.stl: pivots at y=-7 / y=27 -->
+  <xacro:property name="len_fingerkuppe" value="36.7"/> <!-- fingerkuppe.stl: pivot y=-2, tip y=34.7 -->
+
+  <!-- Joint limits (effort in Nm, velocity in rad/s - rough servo values) -->
+  <xacro:property name="effort" value="1.0"/>
+  <xacro:property name="velocity" value="5.0"/>
+
+  <!-- ===================================================================== -->
+  <!--  Materials                                                             -->
+  <!-- ===================================================================== -->
+  <material name="hand_dark">
+    <color rgba="0.25 0.27 0.30 1.0"/>
+  </material>
+  <material name="hand_palm">
+    <color rgba="0.80 0.80 0.82 1.0"/>
+  </material>
+  <material name="hand_finger">
+    <color rgba="0.95 0.55 0.15 1.0"/>
+  </material>
+  <material name="hand_tip">
+    <color rgba="0.20 0.45 0.80 1.0"/>
+  </material>
+
+  <!-- ===================================================================== -->
+  <!--  Helper macros                                                         -->
+  <!-- ===================================================================== -->
+  <!-- Solid box inertia. vol: part volume [mm^3] (from CAD), s*: box size [mm],
+       c*: centre of mass in the link frame [mm] -->
+  <xacro:macro name="box_inertial" params="vol sx sy sz cx cy cz">
+    <xacro:property name="m" value="${vol * 1e-9 * density}"/>
+    <inertial>
+      <origin xyz="${cx * mm} ${cy * mm} ${cz * mm}" rpy="0 0 0"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m / 12.0 * ((sy * mm)**2 + (sz * mm)**2)}" ixy="0" ixz="0"
+               iyy="${m / 12.0 * ((sx * mm)**2 + (sz * mm)**2)}" iyz="0"
+               izz="${m / 12.0 * ((sx * mm)**2 + (sy * mm)**2)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Link with a CAD mesh. xyz/rpy: pose of the CAD part frame in the link frame -->
+  <xacro:macro name="mesh_link" params="name mesh material xyz:='0 0 0' rpy:='0 0 0' *inertial">
+    <link name="${name}">
+      <visual>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+        <geometry>
+          <mesh filename="${mesh_dir}/${mesh}.stl" scale="${mm} ${mm} ${mm}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+        <geometry>
+          <mesh filename="${mesh_dir}/${mesh}.stl" scale="${mm} ${mm} ${mm}"/>
+        </geometry>
+      </collision>
+      <xacro:insert_block name="inertial"/>
+    </link>
+  </xacro:macro>
+
+  <!-- Phalanx links. Link frame origin = proximal pivot, y along the phalanx,
+       joint axis along x. The CAD part frame is shifted along y. -->
+  <xacro:macro name="endteil_link" params="name">
+    <xacro:mesh_link name="${name}" mesh="endteil" material="hand_finger" xyz="0 ${7 * mm} 0">
+      <xacro:box_inertial vol="9826" sx="20" sy="54" sz="19" cx="0" cy="22" cz="0.5"/>
+    </xacro:mesh_link>
+  </xacro:macro>
+
+  <xacro:macro name="mittelteil_link" params="name">
+    <xacro:mesh_link name="${name}" mesh="mittelteil" material="hand_finger" xyz="0 ${7 * mm} 0">
+      <xacro:box_inertial vol="6952" sx="20" sy="44" sz="19" cx="0" cy="17" cz="0.5"/>
+    </xacro:mesh_link>
+  </xacro:macro>
+
+  <xacro:macro name="fingerkuppe_link" params="name">
+    <xacro:mesh_link name="${name}" mesh="fingerkuppe" material="hand_tip" xyz="0 ${2 * mm} 0">
+      <xacro:box_inertial vol="8214" sx="20" sy="41.7" sz="20.5" cx="0" cy="15.8" cz="0.25"/>
+    </xacro:mesh_link>
+  </xacro:macro>
+
+  <!-- Finger with three coupled flexion joints.
+       x, y: position of the MCP pivot on the palm [mm] (pivot height z = 15 mm)
+       proximal: CAD part used as proximal phalanx ("endteil" or "mittelteil") -->
+  <xacro:macro name="finger" params="name x y proximal">
+    <xacro:if value="${proximal == 'endteil'}">
+      <xacro:property name="prox_len" value="${len_endteil}"/>
+      <xacro:endteil_link name="${name}_proximal_link"/>
+    </xacro:if>
+    <xacro:unless value="${proximal == 'endteil'}">
+      <xacro:property name="prox_len" value="${len_mittelteil}"/>
+      <xacro:mittelteil_link name="${name}_proximal_link"/>
+    </xacro:unless>
+    <xacro:mittelteil_link name="${name}_middle_link"/>
+    <xacro:fingerkuppe_link name="${name}_distal_link"/>
+    <link name="${name}_tip"/>
+
+    <joint name="${name}_mcp_joint" type="revolute">
+      <parent link="palm_link"/>
+      <child link="${name}_proximal_link"/>
+      <origin xyz="${x * mm} ${y * mm} ${15 * mm}" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit lower="0.0" upper="${mcp_max}" effort="${effort}" velocity="${velocity}"/>
+    </joint>
+
+    <joint name="${name}_pip_joint" type="revolute">
+      <parent link="${name}_proximal_link"/>
+      <child link="${name}_middle_link"/>
+      <origin xyz="0 ${prox_len * mm} 0" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit lower="0.0" upper="${mcp_max * pip_ratio}" effort="${effort}" velocity="${velocity}"/>
+      <mimic joint="${name}_mcp_joint" multiplier="${pip_ratio}" offset="0"/>
+    </joint>
+
+    <joint name="${name}_dip_joint" type="revolute">
+      <parent link="${name}_middle_link"/>
+      <child link="${name}_distal_link"/>
+      <origin xyz="0 ${len_mittelteil * mm} 0" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit lower="0.0" upper="${mcp_max * dip_ratio}" effort="${effort}" velocity="${velocity}"/>
+      <mimic joint="${name}_mcp_joint" multiplier="${dip_ratio}" offset="0"/>
+    </joint>
+
+    <joint name="${name}_tip_joint" type="fixed">
+      <parent link="${name}_distal_link"/>
+      <child link="${name}_tip"/>
+      <origin xyz="0 ${len_fingerkuppe * mm} 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ===================================================================== -->
+  <!--  Base and palm                                                         -->
+  <!-- ===================================================================== -->
+  <!-- base_link frame = CAD assembly origin (palm corner at the wrist, thumb side).
+       Kept without inertia (KDL / robot_state_publisher do not support an
+       inertia on the root link). -->
+  <link name="base_link"/>
+
+  <xacro:mesh_link name="forearm_link" mesh="base" material="hand_dark" xyz="${-80 * mm} 0 0">
+    <xacro:box_inertial vol="139457" sx="190" sy="111" sz="70" cx="-47.5" cy="-55.5" cz="-5"/>
+  </xacro:mesh_link>
+
+  <joint name="forearm_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="forearm_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:mesh_link name="palm_link" mesh="handflaeche" material="hand_palm">
+    <xacro:box_inertial vol="347955" sx="115" sy="157" sz="30" cx="-57.5" cy="78.5" cz="15"/>
+  </xacro:mesh_link>
+
+  <joint name="palm_joint" type="fixed">
+    <parent link="forearm_link"/>
+    <child link="palm_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!--  Fingers (MCP pivots from the knuckle bores of handflaeche.stl)       -->
+  <!-- ===================================================================== -->
+  <xacro:finger name="index"  x="-12.5"  y="137.0" proximal="endteil"/>
+  <xacro:finger name="middle" x="-42.5"  y="152.0" proximal="endteil"/>
+  <xacro:finger name="ring"   x="-72.5"  y="132.0" proximal="endteil"/>
+  <xacro:finger name="little" x="-102.5" y="112.0" proximal="mittelteil"/>
+
+  <!-- ===================================================================== -->
+  <!--  Thumb                                                                 -->
+  <!-- ===================================================================== -->
+  <!-- Rotation (opposition) about an axis parallel to y through (-15, *, 15) mm
+       (bore of the palm / boss of Daumen_Grundgelenk). Not servo driven. -->
+  <joint name="thumb_rotation_joint" type="revolute">
+    <parent link="palm_link"/>
+    <child link="thumb_base_link"/>
+    <origin xyz="${-15 * mm} ${20.5 * mm} ${15 * mm}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="${thumb_rotation_min}" upper="${thumb_rotation_max}" effort="${effort}" velocity="${velocity}"/>
+  </joint>
+
+  <xacro:mesh_link name="thumb_base_link" mesh="daumen_grundgelenk" material="hand_palm"
+                   xyz="${36.213203 * mm} 0 ${-15 * mm}">
+    <xacro:box_inertial vol="18516" sx="51.7" sy="37.5" sz="25" cx="17.86" cy="18.75" cz="0"/>
+  </xacro:mesh_link>
+
+  <!-- Thumb MCP pivot: bore at (0, 30, 15) mm in the Daumen_Grundgelenk part frame.
+       The thumb phalanges are turned by -90 deg about y w.r.t. the thumb base. -->
+  <joint name="thumb_mcp_joint" type="revolute">
+    <parent link="thumb_base_link"/>
+    <child link="thumb_proximal_link"/>
+    <origin xyz="${36.213203 * mm} ${30 * mm} 0" rpy="0 ${-pi / 2} 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0.0" upper="${thumb_mcp_max}" effort="${effort}" velocity="${velocity}"/>
+  </joint>
+  <xacro:endteil_link name="thumb_proximal_link"/>
+
+  <joint name="thumb_ip_joint" type="revolute">
+    <parent link="thumb_proximal_link"/>
+    <child link="thumb_distal_link"/>
+    <origin xyz="0 ${len_endteil * mm} 0" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0.0" upper="${thumb_mcp_max * thumb_ip_ratio}" effort="${effort}" velocity="${velocity}"/>
+    <mimic joint="thumb_mcp_joint" multiplier="${thumb_ip_ratio}" offset="0"/>
+  </joint>
+  <xacro:fingerkuppe_link name="thumb_distal_link"/>
+
+  <link name="thumb_tip"/>
+  <joint name="thumb_tip_joint" type="fixed">
+    <parent link="thumb_distal_link"/>
+    <child link="thumb_tip"/>
+    <origin xyz="0 ${len_fingerkuppe * mm} 0" rpy="0 0 0"/>
+  </joint>
+
+</robot>

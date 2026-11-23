@@ -1,0 +1,98 @@
+# =============================================================================
+#  Denavit-Hartenberg parameters of the robot hand (standard / distal DH)
+# =============================================================================
+#
+#  Homogeneous transform from frame i-1 to frame i:
+#
+#     A_i = Rot_z(theta_i) * Trans_z(d_i) * Trans_x(a_i) * Rot_x(alpha_i)
+#
+#     theta_i = q_i + theta_offset_i      (q_i: joint angle of the URDF joint)
+#
+#  Finger tip in the palm frame:
+#
+#     T_palm_tip = T_palm_0 * A_1 * A_2 * ... * A_n
+#
+#  T_palm_0 ("base_transform") is the constant pose of DH frame 0 in the URDF
+#  frame "palm_link" (4x4 homogeneous matrix, translation in m). The last DH
+#  frame n lies on the finger tip (same origin as the URDF frame <finger>_tip).
+#
+#  Units: lengths in m, angles in rad. Values are taken from the CAD model
+#  (roboterhand_cad_dateien/Hand.stp), see robothand.urdf.xacro.
+#
+#  Frame conventions used:
+#   * Long fingers: z_i points along the joint axis (-x of the palm), so that a
+#     positive joint angle flexes the finger towards the palm side (-z).
+#     x_i points along the phalanx (distal direction).
+#   * Thumb: frame 0 has z_0 along the thumb rotation axis (+y of the palm).
+#     The first DH link is the thumb base (Daumen_Grundgelenk) with a 90 deg
+#     twist between the rotation axis and the thumb flexion axes.
+# =============================================================================
+
+base_frame: palm_link
+
+fingers:
+  thumb:
+    tip_frame: thumb_tip
+    joints: [thumb_rotation_joint, thumb_mcp_joint, thumb_ip_joint]
+    base_transform:
+      - [1.0, 0.0,  0.0, -0.0150]
+      - [0.0, 0.0,  1.0,  0.0205]
+      - [0.0, -1.0, 0.0,  0.0150]
+      - [0.0, 0.0,  0.0,  1.0]
+    #       theta_offset        d        a          alpha
+    dh:
+      - [0.0,                0.030,  0.0362132, -1.5707963]  # thumb rotation (Daumen_Grundgelenk)
+      - [-1.5707963,         0.0,    0.0440,     0.0]        # thumb MCP -> IP   (endteil)
+      - [0.0,                0.0,    0.0367,     0.0]        # thumb IP  -> tip  (Fingerkuppe)
+
+  index:
+    tip_frame: index_tip
+    joints: [index_mcp_joint, index_pip_joint, index_dip_joint]
+    base_transform:
+      - [0.0, 0.0,  -1.0, -0.0125]
+      - [1.0, 0.0,  0.0,  0.1370]
+      - [0.0, -1.0, 0.0,  0.0150]
+      - [0.0, 0.0,  0.0,  1.0]
+    dh:
+      - [0.0, 0.0, 0.0440, 0.0]  # MCP -> PIP (endteil)
+      - [0.0, 0.0, 0.0340, 0.0]  # PIP -> DIP (mittelteil)
+      - [0.0, 0.0, 0.0367, 0.0]  # DIP -> tip (Fingerkuppe)
+
+  middle:
+    tip_frame: middle_tip
+    joints: [middle_mcp_joint, middle_pip_joint, middle_dip_joint]
+    base_transform:
+      - [0.0, 0.0,  -1.0, -0.0425]
+      - [1.0, 0.0,  0.0,  0.1520]
+      - [0.0, -1.0, 0.0,  0.0150]
+      - [0.0, 0.0,  0.0,  1.0]
+    dh:
+      - [0.0, 0.0, 0.0440, 0.0]
+      - [0.0, 0.0, 0.0340, 0.0]
+      - [0.0, 0.0, 0.0367, 0.0]
+
+  ring:
+    tip_frame: ring_tip
+    joints: [ring_mcp_joint, ring_pip_joint, ring_dip_joint]
+    base_transform:
+      - [0.0, 0.0,  -1.0, -0.0725]
+      - [1.0, 0.0,  0.0,  0.1320]
+      - [0.0, -1.0, 0.0,  0.0150]
+      - [0.0, 0.0,  0.0,  1.0]
+    dh:
+      - [0.0, 0.0, 0.0440, 0.0]
+      - [0.0, 0.0, 0.0340, 0.0]
+      - [0.0, 0.0, 0.0367, 0.0]
+
+  little:
+    tip_frame: little_tip
+    joints: [little_mcp_joint, little_pip_joint, little_dip_joint]
+    base_transform:
+      - [0.0, 0.0,  -1.0, -0.1025]
+      - [1.0, 0.0,  0.0,  0.1120]
+      - [0.0, -1.0, 0.0,  0.0150]
+      - [0.0, 0.0,  0.0,  1.0]
+    dh:
+      - [0.0, 0.0, 0.0340, 0.0]  # MCP -> PIP (mittelteil, the little finger is shorter)
+      - [0.0, 0.0, 0.0340, 0.0]
+      - [0.0, 0.0, 0.0367, 0.0]
