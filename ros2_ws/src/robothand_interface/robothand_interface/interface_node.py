@@ -65,7 +65,7 @@ class RobotHandInterface(Node):
                          'Angle of the actuated joint when the finger is closed [rad]')
         passive_names = p('passive_joints', ['thumb_rotation_joint'],
                           'Joints without servo (set manually / via joint_command)')
-        passive_pos = p('passive_joint_positions', [-0.2863], 'Initial passive joint angles [rad]')
+        passive_pos = p('passive_joint_positions', [0.2863], 'Initial passive joint angles [rad]')
         self.max_speed = p('max_speed_deg_s', 180.0, 'Max. servo speed [deg/s], 0 = no ramp')
         self.telemetry_hz = p('telemetry_rate_hz', 50.0, 'Firmware telemetry rate [Hz]')
         self.publish_hz = p('publish_rate_hz', 50.0, 'joint_states publish rate [Hz]')

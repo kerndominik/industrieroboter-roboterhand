@@ -28,8 +28,8 @@ Visualization Manager:
       Normal Cell Count: 0
       Offset:
         X: -0.05
-        Y: 0.05
-        Z: -0.15
+        Y: 0.12
+        Z: -0.002
       Plane: XY
       Plane Cell Count: 12
       Reference Frame: <Fixed Frame>
@@ -105,18 +105,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.05
-        Y: 0.11
-        Z: -0.03
+        X: -0.03
+        Y: 0.13
+        Z: 0.04
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: -0.45
+      Pitch: 0.6
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.75
+      Yaw: 4.0
     Saved: ~
 Window Geometry:
   Displays:

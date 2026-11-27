@@ -151,16 +151,20 @@ Each finger has one servo with a tendon. In `robothand_interface/config/robothan
 ## Kinematic model
 
 The URDF (`robothand_description/urdf/robothand.urdf.xacro`) was derived from the
-STEP assembly `Hand.stp`: the joint axes and pivots are the pin bores of the
-parts (endteil: pivots at y = −7 / 37 mm, mittelteil: −7 / 27 mm, Fingerkuppe: −2 mm),
-the MCP pivots are the knuckle bores of the palm. With the CAD joint angles the
-URDF reproduces every CAD part pose exactly. Frames: x across the palm (thumb at +x),
-y along the fingers, palm side = −z.
+STEP assembly `Hand.stp` and the revised thumb base `Daumen_Grundgelenk_neu.stp`:
+the joint axes and pivots are the pin bores of the parts (endteil: pivots at
+y = −7 / 37 mm, mittelteil: −7 / 27 mm, Fingerkuppe: −2 mm), the MCP pivots are the
+knuckle bores of the palm. Frames (right hand): x across the palm (thumb at +x),
+y along the fingers, palm side = +z. Positive joint angles flex the fingers towards
+the palm side. The forearm / servo housing (`Base.stl`) is not part of the model.
 
 * Long fingers: `*_mcp_joint` (servo), `*_pip_joint` and `*_dip_joint` coupled by
   `<mimic>` (PIP = 1.0 × MCP, DIP = 0.7 × MCP, adjustable at the top of the xacro).
-* Thumb: `thumb_rotation_joint` (rotation of *Daumen_Grundgelenk* about an axis
-  parallel to y, passive), `thumb_mcp_joint` (servo), `thumb_ip_joint` (mimic).
+* Thumb: `thumb_rotation_joint` (rotation of *Daumen_Grundgelenk_neu* about an axis
+  parallel to y, passive; 0 = thumb in the palm plane, positive = towards the palm
+  side, CAD pose 16.4°), `thumb_mcp_joint` (servo), `thumb_ip_joint` (mimic).
+  The thumb MCP hinge is the fork of the new thumb base, its pin axis lies at 45°
+  in the palm plane; the straight thumb points along (1, 1, 0)/√2.
 * The little finger uses a *mittelteil* as proximal phalanx (34 mm instead of 44 mm).
 
 ### Denavit-Hartenberg parameters
@@ -175,8 +179,8 @@ Standard DH convention, `A_i = Rot_z(θ_i) · Trans_z(d_i) · Trans_x(a_i) · Ro
 | | 2 | PIP | 0 | 0 | 34.0 | 0 |
 | | 3 | DIP | 0 | 0 | 36.7 | 0 |
 | little | 1–3 | MCP, PIP, DIP | 0 | 0 | 34.0, 34.0, 36.7 | 0 |
-| thumb | 1 | rotation | 0 | 30.0 | 36.21 | −90° |
-| | 2 | MCP | −90° | 0 | 44.0 | 0 |
+| thumb | 1 | rotation | 0 | −76.11 | 0 | 45° |
+| | 2 | MCP | −90° | 58.21 | 44.0 | 0 |
 | | 3 | IP | 0 | 0 | 36.7 | 0 |
 
 The GUI tab *Kinematics (DH)* shows the table with the current joint angles, all

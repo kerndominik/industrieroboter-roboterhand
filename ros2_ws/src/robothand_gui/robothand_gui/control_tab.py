@@ -11,17 +11,20 @@ from .ros_node import FINGERS
 
 THUMB_ROTATION_JOINT = 'thumb_rotation_joint'
 THUMB_ROTATION_RANGE_DEG = (-30.0, 105.0)
-THUMB_ROTATION_CAD_DEG = -16.4
+THUMB_ROTATION_CAD_DEG = 16.4
 
 # name: (closure thumb, index, middle, ring, little), thumb rotation [deg]
+# Thumb rotation: 0 = thumb in the palm plane, positive = towards the palm side.
+# The values were fitted to the URDF model (e.g. pinch: thumb tip 13 mm from
+# the index tip) and may need tuning on the real hand.
 PRESETS = {
     'Open hand': ([0.0, 0.0, 0.0, 0.0, 0.0], THUMB_ROTATION_CAD_DEG),
-    'Fist': ([0.8, 1.0, 1.0, 1.0, 1.0], 60.0),
-    'Pinch': ([0.6, 0.6, 0.0, 0.0, 0.0], 90.0),
-    'Tripod': ([0.6, 0.55, 0.55, 0.0, 0.0], 90.0),
-    'Cylinder grasp': ([0.5, 0.6, 0.6, 0.6, 0.6], 75.0),
-    'Point': ([0.8, 0.0, 1.0, 1.0, 1.0], 60.0),
-    'Peace': ([0.8, 0.0, 0.0, 1.0, 1.0], 60.0),
+    'Fist': ([0.1, 1.0, 1.0, 1.0, 1.0], 90.0),
+    'Pinch': ([0.0, 0.65, 0.0, 0.0, 0.0], 87.5),
+    'Tripod': ([0.0, 0.65, 0.65, 0.0, 0.0], 97.5),
+    'Cylinder grasp': ([0.2, 0.6, 0.6, 0.6, 0.6], 45.0),
+    'Point': ([0.1, 0.0, 1.0, 1.0, 1.0], 90.0),
+    'Peace': ([0.4, 0.0, 0.0, 1.0, 1.0], 90.0),
     'Thumbs up': ([0.0, 1.0, 1.0, 1.0, 1.0], THUMB_ROTATION_CAD_DEG),
 }
 DEMO_SEQUENCE = ['Open hand', 'Fist', 'Open hand', 'Pinch', 'Tripod', 'Cylinder grasp',

@@ -96,12 +96,12 @@ class DHTab(QWidget):
         ax.set_zlabel('z [mm]')
         ax.set_xlim(-150, 70)
         ax.set_ylim(-20, 280)
-        ax.set_zlim(-150, 70)
+        ax.set_zlim(-70, 150)
         try:
             ax.set_box_aspect((220, 300, 220))
         except AttributeError:  # old matplotlib
             pass
-        ax.view_init(elev=20, azim=-150)
+        ax.view_init(elev=30, azim=-130)
         ax.legend(loc='upper left', fontsize='x-small')
 
     def update_view(self):

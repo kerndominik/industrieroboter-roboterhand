@@ -1,0 +1,12 @@
+# Always use LF line endings in the working tree, also on Windows: the files are
+# used from WSL / Linux (bash scripts with CRLF break, e.g. dds_localhost.sh).
+* text=auto eol=lf
+
+# CAD and image files
+*.stl binary
+*.STL binary
+*.stp binary
+*.step binary
+*.png binary
+*.jpg binary
+*.pdf binary

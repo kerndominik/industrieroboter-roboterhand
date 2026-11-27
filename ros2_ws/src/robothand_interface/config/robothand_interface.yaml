@@ -21,7 +21,7 @@ robothand_interface:
 
     # joints without servo, published with a fixed (manually set) value
     passive_joints: [thumb_rotation_joint]
-    passive_joint_positions: [-0.2863]   # thumb orientation of the CAD model
+    passive_joint_positions: [0.2863]    # thumb orientation of the CAD model (16.4 deg)
 
     max_speed_deg_s: 180.0     # servo speed limit (ramp in the firmware)
     telemetry_rate_hz: 50.0    # servo feedback / strain gauge rate of the firmware
